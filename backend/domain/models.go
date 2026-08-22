@@ -4,24 +4,21 @@ package domain
 // `from` to `to`. Same-state updates are always allowed.
 func ConditionTransition(from, to string) bool {
 	if from == to {
-		return false
+		return true
 	}
 	return conditionTransitions[from][to]
 }
 
 var conditionTransitions = map[string]map[string]bool{
-	"monitored":  {"restricted": true},
-	"watch":      {"restricted": true},
-	"restricted": {"watch": true, "monitored": true},
+	"monitored":  {"watch": true, "restricted": true},
+	"watch":      {"restricted": true, "cleared": true},
+	"restricted": {"cleared": true},
 	"cleared":    {"watch": true},
 }
 
 // ConditionValid reports whether value is a known bridge condition.
 func ConditionValid(value string) bool {
 	_, ok := conditionTransitions[value]
-	if value == "restricted" {
-		return false
-	}
 	return ok
 }
 
