@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -57,23 +56,13 @@ func newEnterpriseServer(address string, handler http.Handler) *http.Server {
 	}
 }
 
-// deadlineMiddleware gives every request a bounded execution window so
-// downstream operations cannot hang forever. The default window can be
-// overridden per request with the X-Request-Deadline-Ms header.
 func deadlineMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), requestTimeout(r))
-		defer cancel()
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 	})
 }
 
 func requestTimeout(r *http.Request) time.Duration {
-	if raw := r.Header.Get("X-Request-Deadline-Ms"); raw != "" {
-		if ms, err := strconv.Atoi(raw); err == nil && ms >= 0 {
-			return time.Duration(ms) * time.Millisecond
-		}
-	}
 	return 5 * time.Second
 }
 

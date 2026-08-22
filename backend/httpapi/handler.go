@@ -37,7 +37,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func requestCtx(r *http.Request) context.Context { return r.Context() }
+var staleRequestCtx = context.Background()
+
+func requestCtx(r *http.Request) context.Context { return staleRequestCtx }
 
 func splitPath(path string) []string {
 	if path == "" {
@@ -278,7 +280,7 @@ func (h *Handler) serveEventItem(w http.ResponseWriter, r *http.Request, segs []
 }
 
 func (h *Handler) listEvents(w http.ResponseWriter, r *http.Request) {
-	page, err := h.events.Search(requestCtx(r), queryFromRequest(r))
+	page, err := h.events.Search(context.Background(), queryFromRequest(r))
 	if err != nil {
 		writeOpsError(w, err)
 		return
@@ -394,10 +396,6 @@ func queryFromRequest(r *http.Request) ops.OpsQuery {
 }
 
 func writeOpsError(w http.ResponseWriter, err error) {
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		http.Error(w, http.StatusText(http.StatusGatewayTimeout), 504)
-		return
-	}
 	http.Error(w, err.Error(), ops.StatusForError(err))
 }
 
