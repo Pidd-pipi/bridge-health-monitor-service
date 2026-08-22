@@ -50,17 +50,15 @@ func (s *OpsService) BatchClose(ctx context.Context, ids []string, actor string)
 		}
 		rec, err := s.store.Get(ctx, id)
 		if err != nil {
-			lease.release()
 			results = append(results, BatchItemResult{ID: id, Err: err})
 			continue
 		}
 		rec.Status = OpsStatusClosed
 		if err := s.store.Update(ctx, rec, rec.Revision); err != nil {
-			lease.release()
 			results = append(results, BatchItemResult{ID: id, Err: err})
 			continue
 		}
-		s.audit.Add(rec.ID, "batch_closed", actor)
+		s.audit.Add(rec.ID, "status_changed", actor)
 		lease.release()
 		results = append(results, BatchItemResult{ID: id, OK: true})
 	}
