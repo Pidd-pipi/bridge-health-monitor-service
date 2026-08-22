@@ -18,6 +18,9 @@ func Transition(current, next string) error {
 	if err := Condition(next); err != nil {
 		return err
 	}
+	if current == next {
+		return fmt.Errorf("condition %q already set", next)
+	}
 	if !domain.ConditionTransition(current, next) {
 		return fmt.Errorf("condition transition %q -> %q is not allowed", current, next)
 	}
