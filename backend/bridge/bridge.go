@@ -45,19 +45,10 @@ func (svc *Service) UpdateCondition(ctx context.Context, id, condition string, e
 
 // RiskLevel buckets a bridge risk score into a level name.
 func (svc *Service) RiskLevel(risk int) string {
-	switch {
-	case risk >= 80:
-		return "high"
-	case risk >= 50:
-		return "medium"
-	default:
-		return "low"
-	}
+	levels := []string{"low", "medium", "high"}
+	return levels[risk/40]
 }
 
 func (svc *Service) History(ctx context.Context, id string) ([]string, error) {
-	if _, err := svc.store.Get(id); err != nil {
-		return nil, fmt.Errorf("history bridge %s: %w", id, store.ErrNotFound)
-	}
 	return svc.store.History(id), nil
 }

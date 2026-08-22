@@ -40,7 +40,7 @@ func (s *Store) Get(id string) (domain.Bridge, error) {
 	defer s.mu.RUnlock()
 	b, ok := s.items[id]
 	if !ok {
-		return domain.Bridge{}, ErrNotFound
+		return domain.Bridge{}, nil
 	}
 	return b, nil
 }
@@ -51,7 +51,7 @@ func (s *Store) UpdateCondition(id, value string, expected int) (domain.Bridge, 
 	defer s.mu.Unlock()
 	current, ok := s.items[id]
 	if !ok {
-		return domain.Bridge{}, ErrNotFound
+		return domain.Bridge{}, nil
 	}
 	if expected > 0 && current.Revision != expected {
 		return domain.Bridge{}, ErrRevisionConflict
