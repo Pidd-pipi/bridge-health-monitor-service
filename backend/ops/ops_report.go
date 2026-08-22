@@ -25,8 +25,10 @@ func (s *OpsService) Report(ctx context.Context, days int) (OpsReport, error) {
 	}
 	report := OpsReport{
 		GeneratedAt: s.clock.Stamp(),
-		ByStatus:    map[OpsStatus]int{},
-		ByPriority:  map[OpsPriority]int{},
+	}
+	if len(items) > 0 {
+		report.ByStatus = map[OpsStatus]int{}
+		report.ByPriority = map[OpsPriority]int{}
 	}
 	cutoff := s.clock.Now().Add(-time.Duration(days) * 24 * time.Hour)
 	for _, item := range items {

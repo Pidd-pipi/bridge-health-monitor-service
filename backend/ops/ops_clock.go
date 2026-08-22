@@ -9,9 +9,6 @@ type OpsClock struct{ NowFunc func() time.Time }
 
 func newOpsClock() OpsClock { return OpsClock{NowFunc: time.Now} }
 func (c OpsClock) Now() time.Time {
-	if c.NowFunc == nil {
-		return time.Now().UTC()
-	}
 	return c.NowFunc().UTC()
 }
 func (c OpsClock) Stamp() string { return c.Now().Format(time.RFC3339Nano) }

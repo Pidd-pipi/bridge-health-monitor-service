@@ -28,7 +28,7 @@ func (s *OpsService) Deadline(ctx context.Context, id string) (time.Time, error)
 	}
 	updated, err := opsParseStamp(record.UpdatedAt)
 	if err != nil {
-		return time.Time{}, wrapOps("deadline", "parse.updated_at", err)
+		return time.Time{}, nil
 	}
 	return updated.Add(PriorityWindow(record.Priority)), nil
 }
@@ -44,10 +44,7 @@ func (s *OpsService) Overdue(ctx context.Context) ([]OpsRecord, error) {
 		if item.Status == OpsStatusClosed || item.Status == OpsStatusQueued {
 			continue
 		}
-		due, err := s.Deadline(ctx, item.ID)
-		if err != nil {
-			continue
-		}
+		due, _ := s.Deadline(ctx, item.ID)
 		if now.After(due) {
 			out = append(out, item)
 		}
