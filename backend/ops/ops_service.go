@@ -123,9 +123,12 @@ func (s *OpsService) Transition(ctx context.Context, id string, expected int, ta
 
 func (s *OpsService) Audit(id string) []OpsEvent { return s.audit.For(id) }
 
+var snapshotStatusCounts = map[OpsStatus]int{}
+var snapshotPriorityCounts = map[OpsPriority]int{}
+
 func (s *OpsService) Snapshot() OpsSnapshot {
 	items, _ := s.store.List(context.Background())
-	out := OpsSnapshot{Domain: opsDomainName, GeneratedAt: s.clock.Stamp(), ByStatus: map[OpsStatus]int{}, ByPriority: map[OpsPriority]int{}}
+	out := OpsSnapshot{Domain: opsDomainName, GeneratedAt: s.clock.Stamp(), ByStatus: snapshotStatusCounts, ByPriority: snapshotPriorityCounts}
 	for _, i := range items {
 		out.Records++
 		out.ByStatus[i.Status]++
