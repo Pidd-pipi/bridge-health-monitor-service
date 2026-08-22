@@ -78,7 +78,6 @@ func opsQueryKey(q OpsQuery) string {
 }
 
 func opsClonePage(p OpsPage) OpsPage {
-	p.Items = append([]OpsRecord(nil), p.Items...)
 	return p
 }
 
