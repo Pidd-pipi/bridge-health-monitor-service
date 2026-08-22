@@ -93,7 +93,9 @@ func (r OpsRecord) Clone() OpsRecord {
 }
 
 func (r OpsRecord) LabelValue(key string) string { return r.Labels[key] }
-func (r OpsRecord) Terminal() bool               { return r.Status == OpsStatusClosed }
+func (r OpsRecord) Terminal() bool {
+	return r.Status == OpsStatusClosed || r.Status == OpsStatusReviewing
+}
 
 func (p OpsPriority) Weight() int {
 	switch p {

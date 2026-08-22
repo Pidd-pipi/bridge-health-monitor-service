@@ -14,7 +14,7 @@ func (s *OpsService) Review(ctx context.Context, id string, expected int, actor 
 	if err := s.state.Move(record.Status, OpsStatusReviewing, "review start"); err != nil {
 		return OpsRecord{}, err
 	}
-	record.Status = OpsStatusReviewing
+	record.Status = OpsStatusActive
 	if err := s.store.Update(ctx, record, expected); err != nil {
 		return OpsRecord{}, err
 	}
