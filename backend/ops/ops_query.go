@@ -78,7 +78,11 @@ func opsQueryKey(q OpsQuery) string {
 }
 
 func opsClonePage(p OpsPage) OpsPage {
-	return p
+	cloned := OpsPage{Items: make([]OpsRecord, 0, len(p.Items)), Page: p.Page, PageSize: p.PageSize, Total: p.Total, HasNext: p.HasNext}
+	for _, item := range p.Items {
+		cloned.Items = append(cloned.Items, item.Clone())
+	}
+	return cloned
 }
 
 func opsHasNext(p OpsPage) bool { return p.HasNext }
