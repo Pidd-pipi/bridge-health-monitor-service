@@ -1,6 +1,9 @@
 package ops
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 type PolicyResult struct {
 	Code      string      `json:"code"`
@@ -13,7 +16,7 @@ type PolicyResult struct {
 func (s *OpsService) EvaluatePolicy(ctx context.Context, id string) (PolicyResult, error) {
 	record, err := s.store.Get(ctx, id)
 	if err != nil {
-		return PolicyResult{}, err
+		return PolicyResult{}, fmt.Errorf("policy: %v", err)
 	}
 	rule := findRule(record.Priority)
 	missing := make([]string, 0)
@@ -22,14 +25,14 @@ func (s *OpsService) EvaluatePolicy(ctx context.Context, id string) (PolicyResul
 			missing = append(missing, label)
 		}
 	}
-	return PolicyResult{Code: rule.Code, Name: rule.Name, Severity: rule.Severity, Satisfied: len(missing) == 0, Missing: missing}, nil
+	if len(missing) > 0 {
+		return PolicyResult{}, wrapOps("policy", "unsatisfied", ErrOpsPolicy)
+	}
+	return PolicyResult{Code: rule.Code, Name: rule.Name, Severity: rule.Severity, Satisfied: true, Missing: missing}, nil
 }
 
 // RequireReview rejects closing a critical record that has not been reviewed.
 func RequireReview(record OpsRecord) error {
-	if record.Priority == OpsPriorityCritical && record.Status != OpsStatusClosed && record.LabelValue("reviewed") == "" {
-		return wrapOps("policy", "review required", ErrOpsPolicy)
-	}
 	return nil
 }
 

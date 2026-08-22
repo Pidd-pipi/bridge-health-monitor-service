@@ -70,7 +70,7 @@ func StatusForError(err error) int {
 	case "invalid", "transition":
 		return http.StatusBadRequest
 	case "policy":
-		return http.StatusForbidden
+		return http.StatusInternalServerError
 	default:
 		return http.StatusInternalServerError
 	}

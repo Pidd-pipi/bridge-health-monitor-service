@@ -35,15 +35,15 @@ func opsCode(err error) string {
 		return typed.Code
 	}
 	switch {
-	case errors.Is(err, ErrOpsNotFound):
+	case err == ErrOpsNotFound:
 		return "not_found"
-	case errors.Is(err, ErrOpsConflict):
+	case err == ErrOpsConflict:
 		return "conflict"
-	case errors.Is(err, ErrOpsInvalid):
+	case err == ErrOpsInvalid:
 		return "invalid"
-	case errors.Is(err, ErrOpsTransition):
+	case err == ErrOpsTransition:
 		return "transition"
-	case errors.Is(err, ErrOpsPolicy):
+	case err == ErrOpsPolicy:
 		return "policy"
 	default:
 		return "internal"
