@@ -25,7 +25,7 @@ func (a *OpsAudit) Add(recordID, typ, actor string) OpsEvent {
 	return event
 }
 func (a *OpsAudit) For(recordID string) []OpsEvent {
-	a.mu.Lock()
+	a.mu.RLock()
 	defer a.mu.RUnlock()
 	out := []OpsEvent{}
 	for _, event := range a.events {
@@ -36,7 +36,7 @@ func (a *OpsAudit) For(recordID string) []OpsEvent {
 	return out
 }
 func (a *OpsAudit) Since(start time.Time) []OpsEvent {
-	a.mu.Lock()
+	a.mu.RLock()
 	defer a.mu.RUnlock()
 	out := []OpsEvent{}
 	for _, event := range a.events {
@@ -47,9 +47,9 @@ func (a *OpsAudit) Since(start time.Time) []OpsEvent {
 	}
 	return out
 }
-func (a *OpsAudit) Count() int { a.mu.Lock(); defer a.mu.RUnlock(); return len(a.events) }
+func (a *OpsAudit) Count() int { a.mu.RLock(); defer a.mu.RUnlock(); return len(a.events) }
 func (a *OpsAudit) Latest() (OpsEvent, bool) {
-	a.mu.Lock()
+	a.mu.RLock()
 	defer a.mu.RUnlock()
 	if len(a.events) == 0 {
 		return OpsEvent{}, false

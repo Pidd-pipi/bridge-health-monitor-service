@@ -48,19 +48,26 @@ func (s *OpsService) BatchClose(ctx context.Context, ids []string, actor string)
 			results = append(results, BatchItemResult{ID: id, Err: err})
 			continue
 		}
-		rec, err := s.store.Get(ctx, id)
-		if err != nil {
-			results = append(results, BatchItemResult{ID: id, Err: err})
-			continue
-		}
-		rec.Status = OpsStatusClosed
-		if err := s.store.Update(ctx, rec, rec.Revision); err != nil {
-			results = append(results, BatchItemResult{ID: id, Err: err})
-			continue
-		}
-		s.audit.Add(rec.ID, "status_changed", actor)
+		result := s.batchCloseOne(ctx, id, actor)
 		lease.release()
-		results = append(results, BatchItemResult{ID: id, OK: true})
+		results = append(results, result)
 	}
 	return results
+}
+
+// batchCloseOne closes a single record within a batch. It is a pure
+// transformation of one id into a BatchItemResult and holds no lease state of
+// its own; the caller owns the lease and always releases it after this
+// returns.
+func (s *OpsService) batchCloseOne(ctx context.Context, id, actor string) BatchItemResult {
+	rec, err := s.store.Get(ctx, id)
+	if err != nil {
+		return BatchItemResult{ID: id, Err: err}
+	}
+	rec.Status = OpsStatusClosed
+	if err := s.store.Update(ctx, rec, rec.Revision); err != nil {
+		return BatchItemResult{ID: id, Err: err}
+	}
+	s.audit.Add(rec.ID, "batch_closed", actor)
+	return BatchItemResult{ID: id, OK: true}
 }
