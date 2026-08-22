@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+backend/*.test
+backend/*.out
+backend/bridge-health-monitor-service
