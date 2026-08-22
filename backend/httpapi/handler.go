@@ -37,9 +37,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var staleRequestCtx = context.Background()
-
-func requestCtx(r *http.Request) context.Context { return staleRequestCtx }
+// requestCtx returns the per-request context so client cancellation and the
+// request deadline propagate into the service layer. Sharing a single
+// background context would make every request ignore cancellation and let one
+// request's deadline leak into unrelated requests.
+func requestCtx(r *http.Request) context.Context { return r.Context() }
 
 func splitPath(path string) []string {
 	if path == "" {
@@ -280,7 +282,7 @@ func (h *Handler) serveEventItem(w http.ResponseWriter, r *http.Request, segs []
 }
 
 func (h *Handler) listEvents(w http.ResponseWriter, r *http.Request) {
-	page, err := h.events.Search(context.Background(), queryFromRequest(r))
+	page, err := h.events.Search(requestCtx(r), queryFromRequest(r))
 	if err != nil {
 		writeOpsError(w, err)
 		return

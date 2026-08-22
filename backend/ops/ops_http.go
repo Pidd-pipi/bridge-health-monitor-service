@@ -1,7 +1,9 @@
 package ops
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -60,8 +62,13 @@ func opsActorFromRequest(r *http.Request) string {
 func opsNoStore(w http.ResponseWriter)    { w.Header().Set("Cache-Control", "no-store") }
 func opsRequestID(r *http.Request) string { return r.Header.Get("X-Request-ID") }
 
-// StatusForError maps a domain error to an HTTP status code.
+// StatusForError maps a domain error to an HTTP status code. A canceled or
+// deadline-exceeded context is reported as 504 Gateway Timeout so a client
+// abort or an expired request deadline never surfaces as a 500.
 func StatusForError(err error) int {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return http.StatusGatewayTimeout
+	}
 	switch opsCode(err) {
 	case "not_found":
 		return http.StatusNotFound

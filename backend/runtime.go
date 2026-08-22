@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -56,14 +58,54 @@ func newEnterpriseServer(address string, handler http.Handler) *http.Server {
 	}
 }
 
+// requestDeadlineHeader lets a caller cap how long the server may spend on a
+// single request, expressed in milliseconds.
+const requestDeadlineHeader = "X-Request-Deadline-Ms"
+
+// defaultRequestTimeout bounds a request when the caller omits the header.
+const defaultRequestTimeout = 5 * time.Second
+
 func deadlineMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
+		timeout := requestTimeout(r)
+		ctx, cancel := context.WithTimeout(r.Context(), timeout)
+		defer cancel()
+		// If the request is already past its deadline (client canceled, or the
+		// header requested zero/negative time) fail fast instead of running the
+		// handler against a dead context.
+		if err := ctx.Err(); err != nil {
+			writeDeadlineExceeded(w)
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
+// requestTimeout derives the per-request budget from the deadline header. A
+// missing or unparsable header falls back to the default. A header of zero or
+// a negative value means "already expired" and collapses to a zero duration.
 func requestTimeout(r *http.Request) time.Duration {
-	return 5 * time.Second
+	raw := strings.TrimSpace(r.Header.Get(requestDeadlineHeader))
+	if raw == "" {
+		return defaultRequestTimeout
+	}
+	ms, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return defaultRequestTimeout
+	}
+	if ms <= 0 {
+		return 0
+	}
+	return time.Duration(ms) * time.Millisecond
+}
+
+// writeDeadlineExceeded reports a 504 for a request whose deadline elapsed
+// before its handler could complete.
+func writeDeadlineExceeded(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Retry-After", "1")
+	w.WriteHeader(http.StatusGatewayTimeout)
+	_, _ = w.Write([]byte(http.StatusText(http.StatusGatewayTimeout)))
 }
 
 func requestIDMiddleware(next http.Handler) http.Handler {
