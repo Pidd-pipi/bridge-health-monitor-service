@@ -2,7 +2,6 @@ package bridge
 
 import (
 	"context"
-	"errors"
 	"example.com/bridge-health-monitor-service/store"
 	"fmt"
 	"strings"
@@ -16,8 +15,7 @@ func (svc *Service) ExportCSV(ctx context.Context, ids []string) (string, error)
 	for _, id := range ids {
 		br, err := svc.store.Get(id)
 		if err != nil {
-			if errors.Is(err, store.ErrNotFound) {
-				b.WriteString(csvBridgeRow(id, "", "", "missing", 0, 0))
+			if err == store.ErrNotFound {
 				continue
 			}
 			return "", fmt.Errorf("bridge export: %w", err)

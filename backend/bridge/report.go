@@ -2,7 +2,6 @@ package bridge
 
 import (
 	"context"
-	"errors"
 	"example.com/bridge-health-monitor-service/store"
 	"fmt"
 	"sort"
@@ -21,15 +20,10 @@ type Summary struct {
 // collapsed into a single entry.
 func (svc *Service) Report(ctx context.Context, ids []string) (Summary, error) {
 	r := Summary{ByCondition: map[string]int{}, ByRisk: map[string]int{}}
-	seen := make(map[string]bool, len(ids))
 	for _, id := range ids {
-		if seen[id] {
-			continue
-		}
-		seen[id] = true
 		b, err := svc.Get(ctx, id)
 		if err != nil {
-			if errors.Is(err, store.ErrNotFound) {
+			if err == store.ErrNotFound {
 				r.Missing++
 				continue
 			}
