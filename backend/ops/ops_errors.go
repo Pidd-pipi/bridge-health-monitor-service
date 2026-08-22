@@ -6,11 +6,12 @@ import (
 )
 
 var (
-	ErrOpsNotFound   = errors.New("operations record not found")
-	ErrOpsConflict   = errors.New("operations revision conflict")
-	ErrOpsInvalid    = errors.New("operations request is invalid")
-	ErrOpsTransition = errors.New("operations status transition is not allowed")
-	ErrOpsPolicy     = errors.New("operations policy rejected the request")
+	ErrOpsNotFound       = errors.New("operations record not found")
+	ErrOpsConflict       = errors.New("operations revision conflict")
+	ErrOpsInvalid        = errors.New("operations request is invalid")
+	ErrOpsTransition     = errors.New("operations status transition is not allowed")
+	ErrOpsPolicy         = errors.New("operations policy rejected the request")
+	ErrOpsReviewRequired = errors.New("operations review required before close")
 )
 
 type OpsError struct {
@@ -35,31 +36,35 @@ func opsCode(err error) string {
 		return typed.Code
 	}
 	switch {
-	case err == ErrOpsNotFound:
+	case errors.Is(err, ErrOpsNotFound):
 		return "not_found"
-	case err == ErrOpsConflict:
+	case errors.Is(err, ErrOpsConflict):
 		return "conflict"
-	case err == ErrOpsInvalid:
+	case errors.Is(err, ErrOpsInvalid):
 		return "invalid"
-	case err == ErrOpsTransition:
+	case errors.Is(err, ErrOpsTransition):
 		return "transition"
-	case err == ErrOpsPolicy:
+	case errors.Is(err, ErrOpsReviewRequired):
+		return "review_required"
+	case errors.Is(err, ErrOpsPolicy):
 		return "policy"
 	default:
 		return "internal"
 	}
 }
-func opsIsNotFound(err error) bool   { return errors.Is(err, ErrOpsNotFound) }
-func opsIsConflict(err error) bool   { return errors.Is(err, ErrOpsConflict) }
-func opsIsInvalid(err error) bool    { return errors.Is(err, ErrOpsInvalid) }
-func opsIsTransition(err error) bool { return errors.Is(err, ErrOpsTransition) }
-func opsIsPolicy(err error) bool     { return errors.Is(err, ErrOpsPolicy) }
+func opsIsNotFound(err error) bool       { return errors.Is(err, ErrOpsNotFound) }
+func opsIsConflict(err error) bool       { return errors.Is(err, ErrOpsConflict) }
+func opsIsInvalid(err error) bool        { return errors.Is(err, ErrOpsInvalid) }
+func opsIsTransition(err error) bool      { return errors.Is(err, ErrOpsTransition) }
+func opsIsReviewRequired(err error) bool  { return errors.Is(err, ErrOpsReviewRequired) }
+func opsIsPolicy(err error) bool         { return errors.Is(err, ErrOpsPolicy) }
 
 // Exported aliases used by HTTP handlers.
 var (
-	ErrNotFound   = ErrOpsNotFound
-	ErrConflict   = ErrOpsConflict
-	ErrInvalid    = ErrOpsInvalid
-	ErrTransition = ErrOpsTransition
-	ErrPolicy     = ErrOpsPolicy
+	ErrNotFound       = ErrOpsNotFound
+	ErrConflict       = ErrOpsConflict
+	ErrInvalid        = ErrOpsInvalid
+	ErrTransition     = ErrOpsTransition
+	ErrPolicy         = ErrOpsPolicy
+	ErrReviewRequired = ErrOpsReviewRequired
 )

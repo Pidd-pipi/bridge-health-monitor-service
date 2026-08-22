@@ -67,10 +67,10 @@ func StatusForError(err error) int {
 		return http.StatusNotFound
 	case "conflict":
 		return http.StatusConflict
-	case "invalid", "transition":
+	case "invalid", "transition", "policy":
 		return http.StatusBadRequest
-	case "policy":
-		return http.StatusInternalServerError
+	case "review_required":
+		return http.StatusForbidden
 	default:
 		return http.StatusInternalServerError
 	}
